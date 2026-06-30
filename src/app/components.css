@@ -1,0 +1,25 @@
+@layer components {
+  .nav-link {
+    @apply text-secondary hover:text-gold transition-colors;
+  }
+
+  .search-bar {
+    @apply flex items-center bg-card border border-border rounded-full px-4 py-2 gap-2 w-64;
+  }
+
+  .search-input {
+    @apply bg-transparent outline-none text-sm text-foreground placeholder-secondary w-full;
+  }
+
+  .btn-accent {
+    @apply bg-gold text-button-text px-6 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-90;
+  }
+
+  .site-header {
+    @apply bg-background text-foreground px-8 py-4 border-b border-border;
+  }
+
+  .site-footer {
+    @apply bg-card text-secondary px-8 py-4 text-center text-sm border-t border-border;
+  }
+}
