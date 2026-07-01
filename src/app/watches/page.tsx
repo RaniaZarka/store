@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function WatchesPage() {
   const listings = await prisma.listing.findMany({
     where: { status: "APPROVED", category: "WATCH" },
