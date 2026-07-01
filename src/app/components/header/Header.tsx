@@ -24,6 +24,11 @@ export default function Header() {
           <Link href="/watches" className="nav-link">
             Watches
           </Link>
+          {session?.user?.role === "ADMIN" && (
+            <Link href="/admin" className="nav-link text-gold">
+              Admin
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-6 shrink-0">
@@ -52,6 +57,9 @@ export default function Header() {
 
           {session?.user ? (
             <div className="flex items-center gap-4 whitespace-nowrap">
+              <Link href="/my-listings" className="nav-link text-sm">
+                My Listings
+              </Link>
               <span className="text-sm text-secondary">
                 Welcome, {session.user.name}
               </span>

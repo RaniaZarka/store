@@ -10,6 +10,22 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ListingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Category {
+  WATCH
+  JEWELRY
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -18,8 +34,10 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  role          Role      @default(USER)
   accounts      Account[]
   sessions      Session[]
+  listings      Listing[]
 }
 
 model Account {
@@ -55,4 +73,17 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Listing {
+  id        String        @id @default(cuid())
+  brand     String
+  price     Float
+  imageUrl  String?       @db.Text
+  category  Category
+  status    ListingStatus @default(PENDING)
+  userId    String
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
