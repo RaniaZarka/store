@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -53,10 +55,7 @@ export default function AdminPage() {
       body: JSON.stringify({ status: "APPROVED" }),
     });
     setActing(null);
-    if (!res.ok) {
-      setActionError("Failed to approve. Please try again.");
-      return;
-    }
+    if (!res.ok) { setActionError("Failed to approve. Please try again."); return; }
     router.push("/");
   };
 
@@ -70,10 +69,7 @@ export default function AdminPage() {
       body: JSON.stringify({ status: "REJECTED", reason: rejectTarget.reason }),
     });
     setActing(null);
-    if (!res.ok) {
-      setActionError("Failed to reject. Please try again.");
-      return;
-    }
+    if (!res.ok) { setActionError("Failed to reject. Please try again."); return; }
     setListings((prev) => prev.filter((l) => l.id !== rejectTarget.id));
     setRejectTarget(null);
   };
@@ -83,10 +79,7 @@ export default function AdminPage() {
     setActionError("");
     const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
     setActing(null);
-    if (!res.ok) {
-      setActionError("Failed to delete. Please try again.");
-      return;
-    }
+    if (!res.ok) { setActionError("Failed to delete. Please try again."); return; }
     setListings((prev) => prev.filter((l) => l.id !== id));
   };
 
@@ -109,21 +102,17 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-background px-8 py-12">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-6">
-          Admin Panel
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">Admin Panel</h1>
 
-        {/* Tabs */}
         <div className="flex gap-1 border-b border-border mb-8">
           {(["PENDING", "APPROVED"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => { setTab(t); setRejectTarget(null); }}
-              className={`px-5 py-2 text-sm font-medium rounded-t-md transition-colors ${
-                tab === t
+              className={`px-5 py-2 text-sm font-medium rounded-t-md transition-colors ${tab === t
                   ? "bg-card border border-b-0 border-border text-foreground"
                   : "text-secondary hover:text-foreground"
-              }`}
+                }`}
             >
               {t === "PENDING" ? "Pending Reviews" : "Approved Items"}
             </button>
@@ -145,10 +134,7 @@ export default function AdminPage() {
         ) : (
           <div className="flex flex-col gap-6">
             {listings.map((listing) => (
-              <div
-                key={listing.id}
-                className="bg-card border border-border rounded-lg p-6 flex flex-col gap-4"
-              >
+              <div key={listing.id} className="bg-card border border-border rounded-lg p-6 flex flex-col gap-4">
                 <div className="flex gap-6 items-start">
                   {listing.imageUrl ? (
                     <img
@@ -164,19 +150,14 @@ export default function AdminPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="text-foreground font-semibold text-lg">
-                        {listing.brand}
-                      </span>
+                      <span className="text-foreground font-semibold text-lg">{listing.brand}</span>
                       <span className="text-xs text-secondary bg-background border border-border rounded-full px-2 py-0.5">
                         {listing.category === "WATCH" ? "Watch" : "Jewelry"}
                       </span>
                     </div>
-                    <p className="text-gold font-medium mb-2">
-                      ${listing.price.toLocaleString()}
-                    </p>
+                    <p className="text-gold font-medium mb-2">${listing.price.toLocaleString()}</p>
                     <p className="text-sm text-secondary">
-                      {listing.user.name} {listing.user.lastName} &mdash;{" "}
-                      {listing.user.email}
+                      {listing.user.name} {listing.user.lastName} &mdash; {listing.user.email}
                     </p>
                     <p className="text-xs text-secondary mt-1">
                       {new Date(listing.createdAt).toLocaleDateString()}
@@ -196,9 +177,7 @@ export default function AdminPage() {
                         <button
                           onClick={() =>
                             setRejectTarget(
-                              rejectTarget?.id === listing.id
-                                ? null
-                                : { id: listing.id, reason: "" }
+                              rejectTarget?.id === listing.id ? null : { id: listing.id, reason: "" }
                             )
                           }
                           disabled={acting === listing.id}
@@ -223,16 +202,12 @@ export default function AdminPage() {
                   <div className="border-t border-border pt-4 flex flex-col gap-3">
                     <label className="text-sm font-medium text-secondary">
                       Reason for rejection{" "}
-                      <span className="text-secondary/50 font-normal">
-                        (optional — included in the email to the seller)
-                      </span>
+                      <span className="text-secondary/50 font-normal">(optional — included in the email)</span>
                     </label>
                     <textarea
                       rows={3}
                       value={rejectTarget.reason}
-                      onChange={(e) =>
-                        setRejectTarget({ ...rejectTarget, reason: e.target.value })
-                      }
+                      onChange={(e) => setRejectTarget({ ...rejectTarget, reason: e.target.value })}
                       placeholder="e.g. The item does not meet our quality standards."
                       className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground outline-none focus:border-gold resize-none"
                     />

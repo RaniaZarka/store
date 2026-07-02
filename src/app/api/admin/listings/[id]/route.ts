@@ -24,16 +24,13 @@ export async function PATCH(
 
   const listing = await prisma.listing.findUnique({
     where: { id },
-    include: {
-      user: { select: { name: true, email: true } },
-    },
+    include: { user: { select: { name: true, email: true } } },
   });
 
   if (!listing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // DB update always happens first — email failure must never block this
   await prisma.listing.update({
     where: { id },
     data: { status: body.status },
@@ -41,12 +38,13 @@ export async function PATCH(
 
   const transporter = getTransporter();
   if (transporter && listing.user.email) {
+    const emailClient = transporter;
     const userName = listing.user.name ?? "there";
     const categoryLabel = listing.category === "WATCH" ? "watch" : "jewelry piece";
 
     try {
       if (body.status === "APPROVED") {
-        await transporter.sendMail({
+        await emailClient.sendMail({
           from: EMAIL_FROM,
           to: listing.user.email,
           subject: "Your item has been approved!",
@@ -61,7 +59,7 @@ export async function PATCH(
         });
       } else {
         const reason = body.reason?.trim();
-        await transporter.sendMail({
+        await emailClient.sendMail({
           from: EMAIL_FROM,
           to: listing.user.email,
           subject: "Update on your submitted item",
