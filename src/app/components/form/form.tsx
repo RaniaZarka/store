@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
 export default function Form({ onSuccess }: { onSuccess?: () => void }) {
@@ -11,7 +11,14 @@ export default function Form({ onSuccess }: { onSuccess?: () => void }) {
   const [picture, setPicture] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!submitted) return;
+    const timer = setTimeout(() => onSuccess?.(), 4000);
+    return () => clearTimeout(timer);
+  }, [submitted, onSuccess]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,13 +61,38 @@ export default function Form({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
-    setBrand("");
-    setPrice("");
-    setCategory("WATCH");
-    setPicture(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    onSuccess?.();
+    setSubmitted(true);
   };
+
+  if (submitted) {
+    return (
+      <div className="bg-card border border-border rounded-lg p-10 max-w-md mx-auto flex flex-col items-center gap-4 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gold/10 border border-gold">
+          <svg
+            className="w-7 h-7 text-gold"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </div>
+        <h2 className="text-lg font-semibold text-foreground">
+          Item Submitted
+        </h2>
+        <p className="text-sm text-secondary leading-relaxed">
+          Your item is now under review. You will receive a confirmation email
+          once it has been approved.
+        </p>
+        <p className="text-xs text-secondary/60">This window will close shortly…</p>
+      </div>
+    );
+  }
 
   return (
     <form
