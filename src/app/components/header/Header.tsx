@@ -2,13 +2,23 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import Login from "../login/Login";
 
 export default function Header() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const q = search.trim();
+    if (!q) return;
+    router.push(`/search?brand=${encodeURIComponent(q)}`);
+    setSearch("");
+  };
 
   return (
     <header className="site-header">
@@ -32,28 +42,30 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-6 shrink-0">
-          <div className="search-bar">
-            <svg
-              className="w-4 h-4 text-secondary shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-              />
-            </svg>
+          <form onSubmit={handleSearch} className="search-bar">
+            <button type="submit" className="shrink-0">
+              <svg
+                className="w-4 h-4 text-secondary hover:text-gold transition-colors"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
+                />
+              </svg>
+            </button>
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search by brand…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="search-input"
             />
-          </div>
+          </form>
 
           {session?.user ? (
             <div className="flex items-center gap-4 whitespace-nowrap">
