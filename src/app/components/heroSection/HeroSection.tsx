@@ -38,7 +38,7 @@ export default function HeroSection() {
             >
               &times;
             </button>
-            <Form />
+            <Form onSuccess={() => setIsFormOpen(false)} />
           </div>
         </div>
       )}
