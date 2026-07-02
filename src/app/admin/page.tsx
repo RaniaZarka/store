@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -18,22 +18,31 @@ type Listing = {
   };
 };
 
+type Tab = "PENDING" | "APPROVED";
+
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [tab, setTab] = useState<Tab>("PENDING");
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<{ id: string; reason: string } | null>(null);
   const [actionError, setActionError] = useState("");
 
+  const fetchListings = useCallback(async (t: Tab) => {
+    setLoading(true);
+    setActionError("");
+    const res = await fetch(`/api/admin/listings?status=${t}`);
+    const data = await res.json();
+    setListings(data.listings ?? []);
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch("/api/admin/listings")
-      .then((r) => r.json())
-      .then((data) => setListings(data.listings ?? []))
-      .finally(() => setLoading(false));
-  }, [status]);
+    fetchListings(tab);
+  }, [status, tab, fetchListings]);
 
   const approve = async (id: string) => {
     setActing(id);
@@ -69,7 +78,19 @@ export default function AdminPage() {
     setRejectTarget(null);
   };
 
-  if (status === "loading" || loading) {
+  const deleteListing = async (id: string) => {
+    setActing(id);
+    setActionError("");
+    const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
+    setActing(null);
+    if (!res.ok) {
+      setActionError("Failed to delete. Please try again.");
+      return;
+    }
+    setListings((prev) => prev.filter((l) => l.id !== id));
+  };
+
+  if (status === "loading") {
     return (
       <main className="flex items-center justify-center min-h-screen bg-background">
         <p className="text-secondary">Loading…</p>
@@ -88,9 +109,26 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-background px-8 py-12">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-8">
-          Pending Reviews
+        <h1 className="text-2xl font-bold text-foreground mb-6">
+          Admin Panel
         </h1>
+
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-border mb-8">
+          {(["PENDING", "APPROVED"] as Tab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => { setTab(t); setRejectTarget(null); }}
+              className={`px-5 py-2 text-sm font-medium rounded-t-md transition-colors ${
+                tab === t
+                  ? "bg-card border border-b-0 border-border text-foreground"
+                  : "text-secondary hover:text-foreground"
+              }`}
+            >
+              {t === "PENDING" ? "Pending Reviews" : "Approved Items"}
+            </button>
+          ))}
+        </div>
 
         {actionError && (
           <p className="mb-6 text-sm text-red-400 bg-red-900/20 border border-red-800 rounded-md px-4 py-3">
@@ -98,8 +136,12 @@ export default function AdminPage() {
           </p>
         )}
 
-        {listings.length === 0 ? (
-          <p className="text-secondary">No listings awaiting review.</p>
+        {loading ? (
+          <p className="text-secondary">Loading…</p>
+        ) : listings.length === 0 ? (
+          <p className="text-secondary">
+            {tab === "PENDING" ? "No listings awaiting review." : "No approved listings."}
+          </p>
         ) : (
           <div className="flex flex-col gap-6">
             {listings.map((listing) => (
@@ -142,26 +184,38 @@ export default function AdminPage() {
                   </div>
 
                   <div className="flex flex-col gap-2 shrink-0">
-                    <button
-                      onClick={() => approve(listing.id)}
-                      disabled={acting === listing.id}
-                      className="btn-accent px-4 py-2 text-sm disabled:opacity-50"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() =>
-                        setRejectTarget(
-                          rejectTarget?.id === listing.id
-                            ? null
-                            : { id: listing.id, reason: "" }
-                        )
-                      }
-                      disabled={acting === listing.id}
-                      className="px-4 py-2 text-sm rounded-full border border-border text-secondary hover:text-red-400 hover:border-red-700 transition-colors disabled:opacity-50"
-                    >
-                      Reject
-                    </button>
+                    {tab === "PENDING" ? (
+                      <>
+                        <button
+                          onClick={() => approve(listing.id)}
+                          disabled={acting === listing.id}
+                          className="btn-accent px-4 py-2 text-sm disabled:opacity-50"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() =>
+                            setRejectTarget(
+                              rejectTarget?.id === listing.id
+                                ? null
+                                : { id: listing.id, reason: "" }
+                            )
+                          }
+                          disabled={acting === listing.id}
+                          className="px-4 py-2 text-sm rounded-full border border-border text-secondary hover:text-red-400 hover:border-red-700 transition-colors disabled:opacity-50"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => deleteListing(listing.id)}
+                        disabled={acting === listing.id}
+                        className="px-4 py-2 text-sm rounded-full border border-red-800 text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                      >
+                        {acting === listing.id ? "Deleting…" : "Delete"}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -170,7 +224,7 @@ export default function AdminPage() {
                     <label className="text-sm font-medium text-secondary">
                       Reason for rejection{" "}
                       <span className="text-secondary/50 font-normal">
-                        (optional — will be included in the email to the seller)
+                        (optional — included in the email to the seller)
                       </span>
                     </label>
                     <textarea
