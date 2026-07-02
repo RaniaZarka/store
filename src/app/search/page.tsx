@@ -31,7 +31,7 @@ export default async function SearchPage({
         <p className="text-secondary mb-10">
           {listings.length} item{listings.length !== 1 ? "s" : ""} found
         </p>
-        <ListingGrid listings={listings} />
+        <ListingGrid listings={listings} showBrandFilter={false} />
       </div>
     </main>
   );

@@ -9,23 +9,29 @@ type Listing = {
   imageUrl: string | null;
 };
 
-export default function ListingGrid({ listings }: { listings: Listing[] }) {
+export default function ListingGrid({
+  listings,
+  showBrandFilter = true,
+}: {
+  listings: Listing[];
+  showBrandFilter?: boolean;
+}) {
   const [brand, setBrand] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
   const filtered = useMemo(() => {
     return listings.filter((l) => {
-      if (brand && !l.brand.toLowerCase().includes(brand.toLowerCase())) {
+      if (showBrandFilter && brand && !l.brand.toLowerCase().includes(brand.toLowerCase())) {
         return false;
       }
       if (minPrice !== "" && l.price < parseFloat(minPrice)) return false;
       if (maxPrice !== "" && l.price > parseFloat(maxPrice)) return false;
       return true;
     });
-  }, [listings, brand, minPrice, maxPrice]);
+  }, [listings, brand, minPrice, maxPrice, showBrandFilter]);
 
-  const hasFilters = brand || minPrice || maxPrice;
+  const hasFilters = (showBrandFilter && brand) || minPrice || maxPrice;
 
   const clear = () => {
     setBrand("");
@@ -37,13 +43,15 @@ export default function ListingGrid({ listings }: { listings: Listing[] }) {
     <div>
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-8">
-        <input
-          type="text"
-          value={brand}
-          onChange={(e) => setBrand(e.target.value)}
-          placeholder="Search by brand…"
-          className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground outline-none focus:border-gold placeholder-secondary w-48"
-        />
+        {showBrandFilter && (
+          <input
+            type="text"
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+            placeholder="Search by brand…"
+            className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground outline-none focus:border-gold placeholder-secondary w-48"
+          />
+        )}
         <input
           type="number"
           value={minPrice}
