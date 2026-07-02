@@ -76,7 +76,7 @@ export default function Header() {
                 Welcome, {session.user.name}
               </span>
               <button
-                onClick={() => signOut()}
+                onClick={() => signOut({ callbackUrl: "/" })}
                 className="btn-accent px-4 py-2 text-sm"
               >
                 Sign Out
