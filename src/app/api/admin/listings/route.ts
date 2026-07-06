@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { getListingsByStatus } from "@/services/adminService";
 import type { ListingStatus } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -17,15 +17,6 @@ export async function GET(req: NextRequest) {
     ? (statusParam as ListingStatus)
     : "PENDING";
 
-  const listings = await prisma.listing.findMany({
-    where: { status },
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: {
-        select: { id: true, name: true, lastName: true, email: true },
-      },
-    },
-  });
-
+  const listings = await getListingsByStatus(status);
   return NextResponse.json({ listings });
 }

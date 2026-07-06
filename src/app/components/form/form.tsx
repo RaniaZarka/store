@@ -1,7 +1,28 @@
 "use client";
 
+import type React from "react";
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.src = e.target!.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function Form({ onSuccess }: { onSuccess?: () => void }) {
   const { data: session } = useSession();
@@ -20,7 +41,7 @@ export default function Form({ onSuccess }: { onSuccess?: () => void }) {
     return () => clearTimeout(timer);
   }, [submitted, onSuccess]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -46,7 +67,10 @@ export default function Form({ onSuccess }: { onSuccess?: () => void }) {
     formData.append("brand", brand.trim());
     formData.append("price", String(priceNum));
     formData.append("category", category);
-    if (picture) formData.append("picture", picture);
+    if (picture) {
+      const compressed = await compressImage(picture);
+      formData.append("imageUrl", compressed);
+    }
 
     const res = await fetch("/api/listings", {
       method: "POST",
@@ -156,7 +180,7 @@ export default function Form({ onSuccess }: { onSuccess?: () => void }) {
           onChange={(e) => setPrice(e.target.value)}
           placeholder="0.00"
           min="0"
-          step="0.01"
+          step="1"
           required
           className="bg-transparent border border-border rounded-md px-3 py-2 text-sm text-foreground outline-none focus:border-gold"
         />

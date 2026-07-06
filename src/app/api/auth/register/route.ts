@@ -1,5 +1,5 @@
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { registerUser } from "@/services/userService";
+import { ServiceError } from "@/services/ServiceError";
 
 export async function POST(request: Request) {
   const { name, lastName, email, password, confirmPassword } =
@@ -10,40 +10,18 @@ export async function POST(request: Request) {
     typeof lastName !== "string" ||
     typeof email !== "string" ||
     typeof password !== "string" ||
-    typeof confirmPassword !== "string" ||
-    !name ||
-    !lastName ||
-    !email ||
-    !password
+    typeof confirmPassword !== "string"
   ) {
     return Response.json({ error: "Missing required fields." }, { status: 400 });
   }
 
-  if (password !== confirmPassword) {
-    return Response.json({ error: "Passwords do not match." }, { status: 400 });
+  try {
+    await registerUser(name, lastName, email, password, confirmPassword);
+    return Response.json({ success: true }, { status: 201 });
+  } catch (err) {
+    if (err instanceof ServiceError) {
+      return Response.json({ error: err.message }, { status: err.status });
+    }
+    throw err;
   }
-
-  if (password.length < 8) {
-    return Response.json(
-      { error: "Password must be at least 8 characters long." },
-      { status: 400 }
-    );
-  }
-
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-
-  if (existingUser) {
-    return Response.json(
-      { error: "An account with this email already exists." },
-      { status: 409 }
-    );
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await prisma.user.create({
-    data: { name, lastName, email, password: hashedPassword },
-  });
-
-  return Response.json({ success: true }, { status: 201 });
 }

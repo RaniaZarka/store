@@ -58,6 +58,7 @@ export default function ListingGrid({
           onChange={(e) => setMinPrice(e.target.value)}
           placeholder="Min price"
           min="0"
+          step="50"
           className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground outline-none focus:border-gold placeholder-secondary w-32"
         />
         <input
@@ -66,6 +67,7 @@ export default function ListingGrid({
           onChange={(e) => setMaxPrice(e.target.value)}
           placeholder="Max price"
           min="0"
+          step="50"
           className="bg-card border border-border rounded-md px-3 py-2 text-sm text-foreground outline-none focus:border-gold placeholder-secondary w-32"
         />
         {hasFilters && (

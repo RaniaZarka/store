@@ -33,6 +33,7 @@ export default function MyListingsPage() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
+    setLoading(true);
     fetch("/api/listings")
       .then((r) => r.json())
       .then((data) => setListings(data.listings ?? []))
@@ -42,9 +43,7 @@ export default function MyListingsPage() {
   const handleDelete = async (id: string) => {
     setDeleting(id);
     const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setListings((prev) => prev.filter((l) => l.id !== id));
-    }
+    if (res.ok) setListings((prev) => prev.filter((l) => l.id !== id));
     setDeleting(null);
   };
 
@@ -68,9 +67,7 @@ export default function MyListingsPage() {
     <main className="min-h-screen bg-background px-8 py-12">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-foreground mb-2">My Listings</h1>
-        <p className="text-secondary mb-8">
-          Items you have submitted for review.
-        </p>
+        <p className="text-secondary mb-8">Items you have submitted for review.</p>
 
         {listings.length === 0 ? (
           <p className="text-secondary">You have not submitted any items yet.</p>
@@ -95,25 +92,19 @@ export default function MyListingsPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-foreground font-semibold">
-                      {listing.brand}
-                    </span>
+                    <span className="text-foreground font-semibold">{listing.brand}</span>
                     <span className="text-xs text-secondary bg-background border border-border rounded-full px-2 py-0.5">
                       {listing.category === "WATCH" ? "Watch" : "Jewelry"}
                     </span>
                   </div>
-                  <p className="text-gold font-medium">
-                    ${listing.price.toLocaleString()}
-                  </p>
+                  <p className="text-gold font-medium">${listing.price.toLocaleString()}</p>
                   <p className="text-xs text-secondary mt-1">
                     {new Date(listing.createdAt).toLocaleDateString()}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <span
-                    className={`text-xs border rounded-full px-3 py-1 ${statusStyles[listing.status]}`}
-                  >
+                  <span className={`text-xs border rounded-full px-3 py-1 ${statusStyles[listing.status]}`}>
                     {statusLabel[listing.status]}
                   </span>
                   <button

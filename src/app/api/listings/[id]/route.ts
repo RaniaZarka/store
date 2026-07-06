@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { deleteListing } from "@/services/listingService";
+import { ServiceError } from "@/services/ServiceError";
 
 export async function DELETE(
   _req: NextRequest,
@@ -14,20 +15,13 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const listing = await prisma.listing.findUnique({ where: { id } });
-
-  if (!listing) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  try {
+    await deleteListing(id, session.user.id, session.user.role ?? "USER");
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    if (err instanceof ServiceError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    throw err;
   }
-
-  const isOwner = listing.userId === session.user.id;
-  const isAdmin = session.user.role === "ADMIN";
-
-  if (!isOwner && !isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  await prisma.listing.delete({ where: { id } });
-
-  return NextResponse.json({ success: true });
 }
