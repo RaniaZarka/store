@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { updateListingStatus } from "@/services/adminService";
 import { ServiceError } from "@/services/ServiceError";
-import type { ListingStatus } from "@prisma/client";
+
+type ApprovalStatus = "APPROVED" | "REJECTED";
 
 export async function PATCH(
   req: NextRequest,
@@ -15,9 +16,9 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = (await req.json()) as { status: ListingStatus; reason?: string };
+  const body = (await req.json()) as { status: ApprovalStatus; reason?: string };
 
-  const validStatuses: ListingStatus[] = ["APPROVED", "REJECTED"];
+  const validStatuses: ApprovalStatus[] = ["APPROVED", "REJECTED"];
   if (!validStatuses.includes(body.status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
