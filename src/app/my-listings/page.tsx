@@ -30,10 +30,10 @@ export default function MyListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    setLoading(true);
     fetch("/api/listings")
       .then((r) => r.json())
       .then((data) => setListings(data.listings ?? []))
@@ -41,9 +41,17 @@ export default function MyListingsPage() {
   }, [status]);
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Delete this item? This cannot be undone.")) return;
+
     setDeleting(id);
+    setDeleteError("");
     const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
-    if (res.ok) setListings((prev) => prev.filter((l) => l.id !== id));
+    if (res.ok) {
+      setListings((prev) => prev.filter((l) => l.id !== id));
+    } else {
+      const data = await res.json().catch(() => null);
+      setDeleteError(data?.error ?? "Failed to delete this item. Please try again.");
+    }
     setDeleting(null);
   };
 
@@ -68,6 +76,12 @@ export default function MyListingsPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-foreground mb-2">My Listings</h1>
         <p className="text-secondary mb-8">Items you have submitted for review.</p>
+
+        {deleteError && (
+          <p className="text-sm text-red-400 bg-red-900/20 border border-red-800 rounded-md px-3 py-2 mb-6">
+            {deleteError}
+          </p>
+        )}
 
         {listings.length === 0 ? (
           <p className="text-secondary">You have not submitted any items yet.</p>

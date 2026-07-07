@@ -4,7 +4,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 type Listing = {
   id: string;
@@ -24,7 +23,6 @@ type Tab = "PENDING" | "APPROVED";
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>("PENDING");
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +54,7 @@ export default function AdminPage() {
     });
     setActing(null);
     if (!res.ok) { setActionError("Failed to approve. Please try again."); return; }
-    router.push("/");
+    setListings((prev) => prev.filter((l) => l.id !== id));
   };
 
   const reject = async () => {

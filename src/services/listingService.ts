@@ -9,6 +9,15 @@ export async function getUserListings(userId: string) {
   return prisma.listing.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      brand: true,
+      price: true,
+      category: true,
+      status: true,
+      imageUrl: true,
+      createdAt: true,
+    },
   });
 }
 

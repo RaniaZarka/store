@@ -4,22 +4,55 @@ import type React from "react";
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
+const TARGET_WIDTH = 800;
+const TARGET_HEIGHT = 1000;
+const MIN_BYTES = 100 * 1024;
+const MAX_BYTES = 300 * 1024;
+
+function dataUrlByteSize(dataUrl: string): number {
+  const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+  const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+  return Math.round((base64.length * 3) / 4) - padding;
+}
+
 function compressImage(file: File): Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 800;
-        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        // Cover-crop to exactly 800x1000 so every listing photo is the same size.
+        const scale = Math.max(TARGET_WIDTH / img.width, TARGET_HEIGHT / img.height);
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+        const offsetX = (TARGET_WIDTH - scaledWidth) / 2;
+        const offsetY = (TARGET_HEIGHT - scaledHeight) / 2;
+
         const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
+        canvas.width = TARGET_WIDTH;
+        canvas.height = TARGET_HEIGHT;
+        canvas
+          .getContext("2d")!
+          .drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+
+        // Step the JPEG quality down until the encoded image lands in the 100-300KB range.
+        let quality = 0.92;
+        let dataUrl = canvas.toDataURL("image/jpeg", quality);
+        while (dataUrlByteSize(dataUrl) > MAX_BYTES && quality > 0.3) {
+          quality -= 0.08;
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+        }
+        if (dataUrlByteSize(dataUrl) < MIN_BYTES && quality < 0.92) {
+          quality = Math.min(0.92, quality + 0.08);
+          dataUrl = canvas.toDataURL("image/jpeg", quality);
+        }
+
+        resolve(dataUrl);
       };
+      img.onerror = () => reject(new Error("Could not load image"));
       img.src = e.target!.result as string;
     };
+    reader.onerror = () => reject(new Error("Could not read file"));
     reader.readAsDataURL(file);
   });
 }
@@ -68,8 +101,14 @@ export default function Form({ onSuccess }: { onSuccess?: () => void }) {
     formData.append("price", String(priceNum));
     formData.append("category", category);
     if (picture) {
-      const compressed = await compressImage(picture);
-      formData.append("imageUrl", compressed);
+      try {
+        const compressed = await compressImage(picture);
+        formData.append("imageUrl", compressed);
+      } catch {
+        setSubmitting(false);
+        setError("Could not process the selected image. Please try another one.");
+        return;
+      }
     }
 
     const res = await fetch("/api/listings", {
