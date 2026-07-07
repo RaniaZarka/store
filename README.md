@@ -1,3 +1,46 @@
+✨ Features
+
+👤 User Features
+Create an account and log in securely
+Create product listings (watches & jewelry)
+Upload images and set price/details
+View own listings and their status (pending/approved/rejected)
+
+🧑‍💼 Admin / Employee Features
+View all submitted listings
+Approve or reject listings
+Manage marketplace content before publishing
+
+🛒 Marketplace
+Browse approved listings
+View product details
+Clean product categorization
+
+🧠 Core Business Logic
+
+This project implements a real-world approval workflow system:
+User submits a product listing
+Listing is saved with status: PENDING
+Admin reviews the listing
+Admin either:
+Approves → product becomes public
+Rejects → product is hidden or removed from listing
+
+🏗️ Tech Stack
+Frontend
+Next.js (App Router)
+React
+TypeScript
+Tailwind CSS
+Backend
+Next.js Server Actions / API Routes
+Prisma ORM
+PostgreSQL (or your DB)
+Authentication
+Auth.js (NextAuth)
+Storage
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
